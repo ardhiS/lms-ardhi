@@ -1,4 +1,4 @@
-const BASE_URL = 'https://lms-ardhi-production.up.railway.app';
+const API_BASE_URL = 'https://lms-ardhi-production.up.railway.app';
 /**
  * API helper functions for the LMS
  */
