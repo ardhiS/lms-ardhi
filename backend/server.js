@@ -16,6 +16,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
+console.log('CORS allowed origins:', process.env.FRONTEND_URL);
 app.use(
   cors({
     origin: [
