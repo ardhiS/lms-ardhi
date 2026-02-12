@@ -1,6 +1,4 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
+const BASE_URL = 'https://lms-ardhi-production.up.railway.app';
 /**
  * API helper functions for the LMS
  */
