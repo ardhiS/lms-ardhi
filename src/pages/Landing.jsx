@@ -95,21 +95,17 @@ const Landing = () => {
                 <div className='bg-gradient-to-br from-primary-500 via-secondary-500 to-accent-500 rounded-xl p-1'>
                   <div className='bg-white rounded-lg p-6'>
                     <div className='video-container rounded-lg overflow-hidden bg-gradient-to-br from-gray-100 to-gray-50'>
-                      <div className='absolute inset-0 flex items-center justify-center'>
-                        <div className='text-center'>
-                          <div className='w-20 h-20 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary-500/50 transform hover:scale-110 transition-transform cursor-pointer'>
-                            <svg
-                              className='w-10 h-10 text-white ml-1'
-                              fill='currentColor'
-                              viewBox='0 0 24 24'
-                            >
-                              <path d='M8 5v14l11-7z' />
-                            </svg>
-                          </div>
-                          <p className='text-gray-600 font-medium'>
-                            Video pembahasan soal TKA
-                          </p>
-                        </div>
+                      <div className='relative flex items-center justify-center min-h-[220px]'>
+                        <iframe
+                          width='360'
+                          height='215'
+                          src='https://www.youtube.com/embed/W6NZfCO5SIk'
+                          title='Video Literasi Bahasa Indonesia'
+                          frameBorder='0'
+                          allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
+                          allowFullScreen
+                          className='rounded-lg shadow-lg mx-auto'
+                        ></iframe>
                       </div>
                     </div>
                   </div>
