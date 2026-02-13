@@ -29,26 +29,47 @@ const courseValidation = [
 router.get('/', optionalAuth, async (req, res) => {
   try {
     const { page = 1, limit = 10, category } = req.query;
+    const startIndex = (parseInt(page) - 1) * parseInt(limit);
+    const endIndex = startIndex + parseInt(limit) - 1;
 
-    let courses = await getSheetData(TABLES.COURSES);
-
-    // Filter by category if provided
+    // Build Supabase query for courses
+    let query = req.app.locals.supabase
+      .from(TABLES.COURSES)
+      .select('*', { count: 'exact' });
     if (category) {
-      courses = courses.filter(
-        (course) => course.category.toLowerCase() === category.toLowerCase(),
-      );
+      query = query.eq('category', category);
+    }
+    query = query.range(startIndex, endIndex);
+
+    const {
+      data: courses,
+      count: totalItems,
+      error: courseError,
+    } = await query;
+    if (courseError) throw courseError;
+
+    // Get moduleCount for each course using aggregate
+    const courseIds = courses.map((c) => c.id);
+    let moduleCounts = [];
+    if (courseIds.length > 0) {
+      const { data: moduleAgg, error: moduleAggError } =
+        await req.app.locals.supabase
+          .from(TABLES.MODULES)
+          .select('course_id, count:id')
+          .in('course_id', courseIds)
+          .group('course_id');
+      if (moduleAggError) throw moduleAggError;
+      moduleCounts = moduleAgg.reduce((acc, cur) => {
+        acc[cur.course_id] = cur.count;
+        return acc;
+      }, {});
     }
 
-    // Calculate pagination
-    const startIndex = (parseInt(page) - 1) * parseInt(limit);
-    const endIndex = startIndex + parseInt(limit);
-    const paginatedCourses = courses.slice(startIndex, endIndex);
-
-    // Get module count for each course
-    const modules = await getSheetData(TABLES.MODULES);
-    const coursesWithModules = paginatedCourses.map((course) => ({
+    const coursesWithModules = courses.map((course) => ({
       ...course,
-      moduleCount: modules.filter((m) => m.course_id === course.id).length,
+      moduleCount: moduleCounts[course.id]
+        ? Number(moduleCounts[course.id])
+        : 0,
     }));
 
     res.json({
@@ -57,8 +78,8 @@ router.get('/', optionalAuth, async (req, res) => {
         courses: coursesWithModules,
         pagination: {
           currentPage: parseInt(page),
-          totalPages: Math.ceil(courses.length / parseInt(limit)),
-          totalItems: courses.length,
+          totalPages: Math.ceil(totalItems / parseInt(limit)),
+          totalItems,
           itemsPerPage: parseInt(limit),
         },
       },
