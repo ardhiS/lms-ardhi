@@ -79,7 +79,7 @@ const StudentDashboard = () => {
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Analisis Kemampuan</h3>
                     <div className="h-80">
                         <ResponsiveContainer width="100%" height="100%">
-                            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={progressData}>
+                            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={progressData} height={320}>
                                 <PolarGrid stroke="#E5E7EB" />
                                 <PolarAngleAxis dataKey="subject" tick={{ fill: '#6B7280', fontSize: 12 }} />
                                 <PolarRadiusAxis angle={30} domain={[0, 100]} />
