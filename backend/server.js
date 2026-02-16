@@ -20,6 +20,12 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 console.log('CORS allowed origins:', process.env.FRONTEND_URL);
+
+// Middleware to allow Private Network Access (for accessing localhost from public URL)
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Private-Network', 'true');
+  next();
+});
 app.use(
   cors({
     origin: [
