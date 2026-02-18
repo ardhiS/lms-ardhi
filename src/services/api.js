@@ -1,4 +1,10 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// Backend API URL (Railway deployment)
+// If VITE_API_URL is not set, use production URL in production mode, or localhost in development
+const PROD_API_URL = 'https://tka-ardhi-production.up.railway.app/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD ? PROD_API_URL : 'http://localhost:3000');
+
+console.log(`🌐 Using API URL: ${API_BASE_URL}`);
 
 // OPTIMIZATION: In-memory cache for API responses
 const cache = new Map();
@@ -27,9 +33,17 @@ class ApiService {
    * Handle API response
    */
   async handleResponse(response) {
-    const data = await response.json();
-
     if (!response.ok) {
+      // Try to parse error message from JSON response
+      let errorMessage = 'Terjadi kesalahan pada server';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch (e) {
+        // Fallback for non-JSON errors
+        errorMessage = `Error: ${response.status} ${response.statusText}`;
+      }
+
       if (response.status === 401) {
         // Token expired or invalid
         console.warn('⚠️ Token expired or invalid. Redirecting to login...');
@@ -37,14 +51,21 @@ class ApiService {
         localStorage.removeItem('user');
 
         // Show alert before redirect
-        alert('Sesi Anda telah berakhir. Silakan login kembali.');
+        // alert('Sesi Anda telah berakhir. Silakan login kembali.'); // Removed alert to prevent loop
 
-        window.location.href = '/login';
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
       }
-      throw new Error(data.message || 'An error occurred');
+      throw new Error(errorMessage);
     }
 
-    return data;
+    // Success response
+    try {
+      return await response.json();
+    } catch (e) {
+      return {}; // Return empty object for empty responses (204)
+    }
   }
 
   /**
@@ -62,53 +83,74 @@ class ApiService {
       cache.delete(endpoint);
     }
 
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      method: 'GET',
-      headers: this.getHeaders(),
-    });
-    const data = await this.handleResponse(response);
+    try {
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+      const data = await this.handleResponse(response);
 
-    // Store in cache
-    if (useCache) {
-      cache.set(endpoint, { data, timestamp: Date.now() });
+      // Store in cache
+      if (useCache) {
+        cache.set(endpoint, { data, timestamp: Date.now() });
+      }
+
+      return data;
+    } catch (error) {
+      console.error(`API Error (GET ${endpoint}):`, error);
+      // Fetch only rejects on network failure
+      throw new Error('Gagal terhubung ke server. Periksa koneksi internet Anda.');
     }
-
-    return data;
   }
 
   /**
    * Make POST request
    */
   async post(endpoint, body) {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify(body),
-    });
-    return this.handleResponse(response);
+    try {
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(body),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error(`API Error (POST ${endpoint}):`, error);
+      throw new Error('Gagal terhubung ke server. Periksa koneksi internet Anda.');
+    }
   }
 
   /**
    * Make PUT request
    */
   async put(endpoint, body) {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      method: 'PUT',
-      headers: this.getHeaders(),
-      body: JSON.stringify(body),
-    });
-    return this.handleResponse(response);
+    try {
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        method: 'PUT',
+        headers: this.getHeaders(),
+        body: JSON.stringify(body),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error(`API Error (PUT ${endpoint}):`, error);
+      throw new Error(error.message === 'Failed to fetch' ? 'Gagal terhubung ke server. Periksa koneksi internet Anda.' : error.message);
+    }
   }
 
   /**
    * Make DELETE request
    */
   async delete(endpoint) {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      method: 'DELETE',
-      headers: this.getHeaders(),
-    });
-    return this.handleResponse(response);
+    try {
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        method: 'DELETE',
+        headers: this.getHeaders(),
+      });
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error(`API Error (DELETE ${endpoint}):`, error);
+      throw new Error('Gagal terhubung ke server. Periksa koneksi internet Anda.');
+    }
   }
 
   /**
