@@ -37,6 +37,7 @@ app.use(
 );
 
 // Rate limiting - Apply to all requests
+app.set('trust proxy', 1); // Trust first proxy (required for Railway/Heroku/Vercel)
 app.use('/api/', apiLimiter);
 
 // Middleware to allow Private Network Access (for accessing localhost from public URL)
